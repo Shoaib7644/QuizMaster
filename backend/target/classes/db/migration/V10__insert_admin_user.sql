@@ -1,0 +1,2 @@
+INSERT INTO users (first_name, last_name, email, password_hash, role, is_active, created_at, updated_at)
+VALUES ('Admin', 'User', 'admin@quizmaster.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeGibZU6wN5y3P7i5FZy5v0y0v0v0v0v0', 'ADMIN', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
