@@ -1,0 +1,15 @@
+# Backend build artifacts
+backend/target/
+backend/.gradle/
+backend/build/
+
+# Frontend dependencies and builds
+frontend/node_modules/
+frontend/dist/
+
+# Environment configs and IDEs
+.env
+.env.local
+.idea/
+.vscode/
+*.class
