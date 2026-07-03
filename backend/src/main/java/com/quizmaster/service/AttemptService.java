@@ -118,12 +118,32 @@ public class AttemptService {
     }
 
     private boolean checkAnswer(Question question, String selectedAnswer) {
-        String correctAnswer = question.getCorrectAnswer();
-        if (question.getQuestionType() == QuestionType.TRUE_FALSE) {
-            return correctAnswer.equalsIgnoreCase(selectedAnswer);
-        } else {
-            return correctAnswer.equalsIgnoreCase(selectedAnswer);
+
+        if (selectedAnswer == null || selectedAnswer.isBlank()) {
+            return false;
         }
+
+        String submitted = selectedAnswer.trim();
+        String correct = question.getCorrectAnswer().trim();
+
+        if (question.getQuestionType() == QuestionType.TRUE_FALSE) {
+            return correct.equalsIgnoreCase(submitted);
+        }
+
+        // MCQ:
+        // Database stores A/B/C/D
+        // Frontend submits option text.
+        // Convert correct option letter into its option text.
+
+        String correctOptionText = switch (correct.toUpperCase()) {
+            case "A" -> question.getOptionA();
+            case "B" -> question.getOptionB();
+            case "C" -> question.getOptionC();
+            case "D" -> question.getOptionD();
+            default -> correct;
+        };
+
+        return submitted.equalsIgnoreCase(correctOptionText);
     }
 
     private ResultResponse mapToResultResponse(Attempt attempt) {

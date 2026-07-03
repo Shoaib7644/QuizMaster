@@ -36,26 +36,21 @@ const QuizAttemptPage = () => {
         // to forward `signal` into the Axios config, request-level
         // cancellation will activate automatically with no further changes
         // to this file.
-        const quizData = await getQuizById(quizId, abortController.signal);
+// 1. Fetch quiz
+const quiz = await getQuizById(quizId);
 
-        // If this run has since been superseded (cleanup already fired),
-        // discard this result unconditionally before touching any state.
-        if (isStale) return;
+if (isStale) return;
 
-        console.log("Raw API Response structure:", quizData);
-        const cleanQuiz = quizData.data?.data ? quizData.data.data : quizData.data;
-        setQuiz(cleanQuiz);
+console.log("Quiz:", quiz);
+setQuiz(quiz);
 
-        // 2. Start the quiz attempt (Single envelope: {"success":true,"data":{"attemptId":10}})
-        const attemptData = await startAttempt(user.id, quizId, abortController.signal);
+// 2. Start attempt
+const attempt = await startAttempt(user.id, quizId);
 
-        // Re-check staleness AFTER the second await too — the first check
-        // only proves this run wasn't stale before starting the attempt;
-        // it can still become stale while startAttempt() is in flight.
-        if (isStale) return;
+if (isStale) return;
 
-        console.log("Start attempt response:", attemptData);
-        setAttemptId(attemptData.data.attemptId);
+console.log("Attempt:", attempt);
+setAttemptId(attempt.attemptId);
 
       } catch (err) {
         // Swallow cancellation errors silently — they are expected and
@@ -122,9 +117,8 @@ const QuizAttemptPage = () => {
     );
 
     try {
-      const resultData = await submitAttempt(attemptId, answersArray);
-      const finalResult = resultData.data ? resultData.data : resultData;
-      setResult(finalResult);
+const result = await submitAttempt(attemptId, answersArray);
+setResult(result);
       setSubmitted(true);
     } catch (err) {
       console.error("Submission processing details:", err);

@@ -25,7 +25,7 @@ public class AttemptAnswer {
     @Column(name = "question_id", nullable = false)
     private Long questionId;
 
-    @Column(name = "selected_answer", length = 10)
+    @Column(name = "selected_answer", length = 500)
     private String selectedAnswer;
 
     @Column(name = "is_correct", nullable = false)

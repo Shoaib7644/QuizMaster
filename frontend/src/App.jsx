@@ -22,51 +22,142 @@ import CreateQuizPage from './pages/admin/CreateQuizPage';
 import CategoryManagementPage from './pages/admin/CategoryManagementPage';
 import AnalyticsPage from './pages/admin/AnalyticsPage';
 
+const PublicRoute = ({ isAuthenticated, children }) => {
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
+};
+
+const AuthRoute = ({ isAuthenticated, children }) => {
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
+const AdminRoute = ({ isAuthenticated, user, children }) => {
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role !== 'ADMIN') return <Navigate to="/dashboard" replace />;
+  return children;
+};
+
 function AppRoutes() {
-  const { token } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
 
-  // Helper components for protected routes
-  const PublicRoute = ({ children }) => {
-    const { token } = useAuth();
-    return token ? <Navigate to="/dashboard" replace /> : children;
-  };
-
-  const AuthRoute = ({ children }) => {
-    const { token } = useAuth();
-    return token ? children : <Navigate to="/login" replace />;
-  };
-
-  const AdminRoute = ({ children }) => {
-    const { token, user } = useAuth();
-    if (!token) return <Navigate to="/login" replace />;
-    if (user?.role !== 'ADMIN') return <Navigate to="/dashboard" replace />;
-    return children;
-  };
+  if (loading) {
+    return null;
+  }
 
   return (
     <Router>
-      {token && <Navbar />}
+      {isAuthenticated && <Navbar />}
       <Routes>
-        /* Public Routes */
-        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+        {/* Public Routes */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute isAuthenticated={isAuthenticated}>
+              <LoginPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute isAuthenticated={isAuthenticated}>
+              <RegisterPage />
+            </PublicRoute>
+          }
+        />
 
-        /* Student Protected Routes */
-        <Route path="/dashboard" element={<AuthRoute><StudentDashboard /></AuthRoute>} />
-        <Route path="/quizzes" element={<AuthRoute><QuizListPage /></AuthRoute>} />
-        <Route path="/quizzes/:id" element={<AuthRoute><QuizAttemptPage /></AuthRoute>} />
-        <Route path="/results/:attemptId" element={<AuthRoute><ResultPage /></AuthRoute>} />
-        <Route path="/leaderboard" element={<AuthRoute><LeaderboardPage /></AuthRoute>} />
-        <Route path="/notifications" element={<AuthRoute><NotificationsPage /></AuthRoute>} />
+        {/* Student Protected Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <AuthRoute isAuthenticated={isAuthenticated}>
+              <StudentDashboard />
+            </AuthRoute>
+          }
+        />
+        <Route
+          path="/quizzes"
+          element={
+            <AuthRoute isAuthenticated={isAuthenticated}>
+              <QuizListPage />
+            </AuthRoute>
+          }
+        />
+        <Route
+          path="/quizzes/:id"
+          element={
+            <AuthRoute isAuthenticated={isAuthenticated}>
+              <QuizAttemptPage />
+            </AuthRoute>
+          }
+        />
+        <Route
+          path="/results/:attemptId"
+          element={
+            <AuthRoute isAuthenticated={isAuthenticated}>
+              <ResultPage />
+            </AuthRoute>
+          }
+        />
+        <Route
+          path="/leaderboard"
+          element={
+            <AuthRoute isAuthenticated={isAuthenticated}>
+              <LeaderboardPage />
+            </AuthRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <AuthRoute isAuthenticated={isAuthenticated}>
+              <NotificationsPage />
+            </AuthRoute>
+          }
+        />
 
-        /* Admin Protected Routes */
-        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-        <Route path="/admin/quizzes" element={<AdminRoute><AdminQuizListPage /></AdminRoute>} />
-        <Route path="/admin/quizzes/new" element={<AdminRoute><CreateQuizPage /></AdminRoute>} />
-        <Route path="/admin/categories" element={<AdminRoute><CategoryManagementPage /></AdminRoute>} />
-        <Route path="/admin/analytics" element={<AdminRoute><AnalyticsPage /></AdminRoute>} />
+        {/* Admin Protected Routes */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute isAuthenticated={isAuthenticated} user={user}>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/quizzes"
+          element={
+            <AdminRoute isAuthenticated={isAuthenticated} user={user}>
+              <AdminQuizListPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/quizzes/new"
+          element={
+            <AdminRoute isAuthenticated={isAuthenticated} user={user}>
+              <CreateQuizPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/categories"
+          element={
+            <AdminRoute isAuthenticated={isAuthenticated} user={user}>
+              <CategoryManagementPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/analytics"
+          element={
+            <AdminRoute isAuthenticated={isAuthenticated} user={user}>
+              <AnalyticsPage />
+            </AdminRoute>
+          }
+        />
 
-        /* Redirect root to login */
+        {/* Redirect unmatched routes to login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
