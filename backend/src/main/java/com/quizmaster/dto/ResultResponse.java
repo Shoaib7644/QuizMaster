@@ -8,11 +8,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ResultResponse {
-    private Long attemptId;
+    private Long id;
     private Long userId;
     private Long quizId;
+    private String quizTitle;
+    private String categoryName;
     private Integer score;
-    private Double percentage; // using double for simplicity
+    private Double percentage;
     private Integer totalQuestions;
     private Integer correctAnswers;
     private Integer incorrectAnswers;

@@ -1,0 +1,11 @@
+question_text,option_a,option_b,option_c,option_d,correct_answer,question_type
+Which keyword is used to define a function in Python,def,function,func,define,A,MCQ
+Which data type is immutable in Python,List,Dictionary,Tuple,Set,C,MCQ
+What is the correct file extension for Python source files,.pt,.pyt,.py,.python,C,MCQ
+Which function returns the number of items in a list,length(),len(),size(),count(),B,MCQ
+Which operator is used for exponentiation in Python,^,**,%%,exp(),B,MCQ
+How does Python define a block of code,Curly braces,Parentheses,Indentation,Semicolons,C,MCQ
+Which list method adds an item to the end of the list,insert(),append(),add(),extend(),B,MCQ
+Which keyword is used to catch an exception in Python,catch,except,throw,handle,B,MCQ
+Which of the following is a mutable data type in Python,String,Tuple,List,Integer,C,MCQ
+What values does range(5) generate,1 to 5,0 to 4,0 to 5,1 to 4,B,MCQ

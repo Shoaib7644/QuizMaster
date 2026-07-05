@@ -1,6 +1,5 @@
 package com.quizmaster.controller;
 
-import com.quizmaster.dto.AnswerDto;
 import com.quizmaster.dto.AttemptStartRequest;
 import com.quizmaster.dto.AttemptSubmitRequest;
 import com.quizmaster.dto.AttemptResponse;
@@ -12,6 +11,7 @@ import com.quizmaster.util.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class AttemptController {
     private final UserRepository userRepository;
 
     private Long getCurrentUserId() {
-        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("User not found"));
         return user.getId();
@@ -40,8 +40,6 @@ public class AttemptController {
 
     @PostMapping("/submit")
     public ResponseEntity<ApiResponse<ResultResponse>> submitAttempt(@Valid @RequestBody AttemptSubmitRequest request) {
-        System.out.println("=== INCOMING SUBMIT PAYLOAD ===");
-        System.out.println(request.toString());
         Long userId = getCurrentUserId();
         ResultResponse result = attemptService.submitAttempt(userId, request.getAttemptId(), request);
         return ResponseEntity.ok(ApiResponse.success(result, "Attempt submitted"));

@@ -3,6 +3,7 @@
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/dto/UserDto.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/config/SecurityConfig.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/repository/QuizRepository.java
+/Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/dto/QuizSummaryDto.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/dto/AttemptStartRequest.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/repository/UserRepository.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/entity/Recommendation.java
@@ -23,11 +24,15 @@
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/util/ApiResponse.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/entity/Quiz.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/entity/QuizStatus.java
+/Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/dto/DashboardStatsDto.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/util/JwtUtils.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/repository/RecommendationRepository.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/entity/Question.java
+/Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/dto/CategorySummaryDto.java
+/Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/dto/DashboardResponse.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/config/JwtAuthenticationFilter.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/entity/Category.java
+/Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/controller/DashboardController.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/controller/CategoryController.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/service/CategoryService.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/repository/CategoryRepository.java
@@ -47,6 +52,7 @@
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/dto/AttemptSubmitRequest.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/dto/QuizResponse.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/repository/AttemptAnswerRepository.java
+/Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/service/DashboardService.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/config/OpenAPIConfig.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/QuizmasterApplication.java
 /Users/shoaibahmed/freeClaude/QuizMaster/backend/src/main/java/com/quizmaster/controller/ScoringController.java

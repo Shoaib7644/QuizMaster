@@ -1,23 +1,32 @@
 package com.quizmaster.service;
 
 import com.quizmaster.dto.AnswerDto;
+import com.quizmaster.dto.AttemptResponse;
 import com.quizmaster.dto.AttemptSubmitRequest;
 import com.quizmaster.dto.ResultResponse;
 import com.quizmaster.entity.Attempt;
 import com.quizmaster.entity.AttemptAnswer;
+import com.quizmaster.entity.Category;
 import com.quizmaster.entity.Question;
 import com.quizmaster.entity.QuestionType;
+import com.quizmaster.entity.Quiz;
 import com.quizmaster.exception.ResourceNotFoundException;
 import com.quizmaster.repository.AttemptAnswerRepository;
 import com.quizmaster.repository.AttemptRepository;
+import com.quizmaster.repository.CategoryRepository;
 import com.quizmaster.repository.QuestionRepository;
+import com.quizmaster.repository.QuizRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,12 +35,14 @@ public class AttemptService {
     private final AttemptRepository attemptRepository;
     private final QuestionRepository questionRepository;
     private final AttemptAnswerRepository attemptAnswerRepository;
+    private final QuizRepository quizRepository;
+    private final CategoryRepository categoryRepository;
 
-    public com.quizmaster.dto.AttemptResponse startAttempt(Long userId, Long quizId) {
+    public AttemptResponse startAttempt(Long userId, Long quizId) {
         Attempt attempt = new Attempt();
         attempt.setUserId(userId);
         attempt.setQuizId(quizId);
-        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
         attempt.setStartedAt(now);
         attempt.setCreatedAt(now);
         // submittedAt intentionally left null here — it is set only when
@@ -43,10 +54,10 @@ public class AttemptService {
         attempt.setIncorrectAnswers(0);
         attempt.setTotalPoints(0);
         attemptRepository.save(attempt);
-        return new com.quizmaster.dto.AttemptResponse(attempt.getId());
+        return new AttemptResponse(attempt.getId());
     }
 
-    public ResultResponse submitAttempt(Long userId, Long attemptId, com.quizmaster.dto.AttemptSubmitRequest submitRequest) {
+    public ResultResponse submitAttempt(Long userId, Long attemptId, AttemptSubmitRequest submitRequest) {
         Attempt attempt = attemptRepository.findById(attemptId)
                 .orElseThrow(() -> new ResourceNotFoundException("Attempt not found with id: " + attemptId));
         if (!attempt.getUserId().equals(userId)) {
@@ -72,7 +83,7 @@ public class AttemptService {
 
         List<AttemptAnswer> attemptAnswers = new ArrayList<>();
 
-        for (com.quizmaster.dto.AnswerDto answerDto : submitRequest.getAnswers()) {
+        for (AnswerDto answerDto : submitRequest.getAnswers()) {
             Question question = questions.stream()
                     .filter(q -> q.getId().equals(answerDto.getQuestionId()))
                     .findFirst()
@@ -88,7 +99,7 @@ public class AttemptService {
             attemptAnswer.setQuestionId(question.getId());
             attemptAnswer.setSelectedAnswer(answerDto.getSelectedAnswer());
             attemptAnswer.setIsCorrect(isCorrect);
-            attemptAnswer.setCreatedAt(java.time.LocalDateTime.now());
+            attemptAnswer.setCreatedAt(LocalDateTime.now());
             attemptAnswers.add(attemptAnswer);
         }
 
@@ -104,17 +115,66 @@ public class AttemptService {
         attempt.setCorrectAnswers(correctAnswers);
         attempt.setIncorrectAnswers(totalQuestions - correctAnswers);
         attempt.setTotalPoints(totalPoints);
-        attempt.setSubmittedAt(java.time.LocalDateTime.now());
+        attempt.setSubmittedAt(LocalDateTime.now());
         attemptRepository.save(attempt);
 
-        return mapToResultResponse(attempt);
+        // Single attempt — a direct lookup here is fine, no N+1 risk.
+        Quiz quiz = quizRepository.findById(attempt.getQuizId()).orElse(null);
+        String quizTitle = quiz != null ? quiz.getTitle() : null;
+        String categoryName = resolveCategoryName(quiz);
+
+        return mapToResultResponse(attempt, quizTitle, categoryName);
     }
 
+    /**
+     * Batch-resolves quiz titles and category names for the whole history
+     * list in two queries total, instead of one query per attempt row
+     * (N+1). For a student with dozens of attempts this is the difference
+     * between 2 queries and 40+.
+     */
     public List<ResultResponse> getAttemptHistory(Long userId) {
         List<Attempt> attempts = attemptRepository.findByUserId(userId);
+        if (attempts.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> quizIds = attempts.stream()
+                .map(Attempt::getQuizId)
+                .collect(Collectors.toSet());
+
+        Map<Long, Quiz> quizById = quizRepository.findAllById(quizIds).stream()
+                .collect(Collectors.toMap(Quiz::getId, Function.identity()));
+
+        Set<Long> categoryIds = quizById.values().stream()
+                .map(Quiz::getCategoryId)
+                .collect(Collectors.toSet());
+
+        Map<Long, Category> categoryById = categoryIds.isEmpty()
+                ? Map.of()
+                : categoryRepository.findAllById(categoryIds).stream()
+                  .collect(Collectors.toMap(Category::getId, Function.identity()));
+
         return attempts.stream()
-                .map(this::mapToResultResponse)
+                .map(attempt -> {
+                    Quiz quiz = quizById.get(attempt.getQuizId());
+                    String quizTitle = quiz != null ? quiz.getTitle() : null;
+                    String categoryName = quiz != null
+                            ? categoryById.getOrDefault(quiz.getCategoryId(), null) != null
+                              ? categoryById.get(quiz.getCategoryId()).getName()
+                              : null
+                            : null;
+                    return mapToResultResponse(attempt, quizTitle, categoryName);
+                })
                 .toList();
+    }
+
+    private String resolveCategoryName(Quiz quiz) {
+        if (quiz == null) {
+            return null;
+        }
+        return categoryRepository.findById(quiz.getCategoryId())
+                .map(Category::getName)
+                .orElse(null);
     }
 
     private boolean checkAnswer(Question question, String selectedAnswer) {
@@ -146,19 +206,21 @@ public class AttemptService {
         return submitted.equalsIgnoreCase(correctOptionText);
     }
 
-    private ResultResponse mapToResultResponse(Attempt attempt) {
+    private ResultResponse mapToResultResponse(Attempt attempt, String quizTitle, String categoryName) {
         return new ResultResponse(
                 attempt.getId(),
                 attempt.getUserId(),
                 attempt.getQuizId(),
+                quizTitle,
+                categoryName,
                 attempt.getScore(),
                 attempt.getPercentage().doubleValue(),
                 attempt.getTotalQuestions(),
                 attempt.getCorrectAnswers(),
                 attempt.getIncorrectAnswers(),
                 attempt.getTotalPoints(),
-                attempt.getStartedAt().toString(),
-                attempt.getSubmittedAt().toString()
+                attempt.getStartedAt() != null ? attempt.getStartedAt().toString() : null,
+                attempt.getSubmittedAt() != null ? attempt.getSubmittedAt().toString() : null
         );
     }
 }

@@ -12,20 +12,20 @@ import com.quizmaster.repository.QuizRepository;
 import com.quizmaster.repository.CategoryRepository;
 import com.quizmaster.repository.QuestionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class QuizService {
 
     private final QuizRepository quizRepository;
@@ -33,14 +33,12 @@ public class QuizService {
     private final QuestionRepository questionRepository;
 
     public List<QuizResponse> getQuizzesForStudent() {
-        // Only published quizzes
         return quizRepository.findByStatus(QuizStatus.PUBLISHED).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     public List<QuizResponse> getQuizzesForAdmin() {
-        // All quizzes
         return quizRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -59,7 +57,6 @@ public class QuizService {
     }
 
     public QuizResponse createQuiz(QuizRequest request, Long createdBy) {
-        // Validate category exists
         if (!categoryRepository.existsById(request.getCategoryId())) {
             throw new ResourceNotFoundException("Category not found with id: " + request.getCategoryId());
         }
@@ -69,11 +66,11 @@ public class QuizService {
         quiz.setDescription(request.getDescription());
         quiz.setDifficulty(stringToDifficulty(request.getDifficulty()));
         quiz.setDurationMinutes(request.getDurationMinutes());
-        quiz.setTotalQuestions(request.getTotalQuestions());
-        quiz.setStatus(QuizStatus.DRAFT); // default to draft
+        quiz.setTotalQuestions(0);
+        quiz.setStatus(QuizStatus.DRAFT);
         quiz.setCreatedBy(createdBy);
-        quiz.setCreatedAt(java.time.LocalDateTime.now());
-        quiz.setUpdatedAt(java.time.LocalDateTime.now());
+        quiz.setCreatedAt(LocalDateTime.now());
+        quiz.setUpdatedAt(LocalDateTime.now());
         quizRepository.save(quiz);
         return mapToResponse(quiz);
     }
@@ -81,7 +78,6 @@ public class QuizService {
     public QuizResponse updateQuiz(Long id, QuizRequest request) {
         Quiz quiz = quizRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + id));
-        // Validate category if changed
         if (!request.getCategoryId().equals(quiz.getCategoryId()) && !categoryRepository.existsById(request.getCategoryId())) {
             throw new ResourceNotFoundException("Category not found with id: " + request.getCategoryId());
         }
@@ -90,8 +86,7 @@ public class QuizService {
         quiz.setDescription(request.getDescription());
         quiz.setDifficulty(stringToDifficulty(request.getDifficulty()));
         quiz.setDurationMinutes(request.getDurationMinutes());
-        quiz.setTotalQuestions(request.getTotalQuestions());
-        quiz.setUpdatedAt(java.time.LocalDateTime.now());
+        quiz.setUpdatedAt(LocalDateTime.now());
         quizRepository.save(quiz);
         return mapToResponse(quiz);
     }
@@ -99,8 +94,13 @@ public class QuizService {
     public QuizResponse publishQuiz(Long id) {
         Quiz quiz = quizRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + id));
+        List<Question> questions = questionRepository.findByQuizId(quiz.getId());
+        if (questions.isEmpty()) {
+            throw new IllegalStateException(
+                    "Cannot publish a quiz with no questions. Upload questions first.");
+        }
         quiz.setStatus(QuizStatus.PUBLISHED);
-        quiz.setUpdatedAt(java.time.LocalDateTime.now());
+        quiz.setUpdatedAt(LocalDateTime.now());
         quizRepository.save(quiz);
         return mapToResponse(quiz);
     }
@@ -109,28 +109,39 @@ public class QuizService {
         Quiz quiz = quizRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + id));
         quiz.setStatus(QuizStatus.ARCHIVED);
-        quiz.setUpdatedAt(java.time.LocalDateTime.now());
+        quiz.setUpdatedAt(LocalDateTime.now());
         quizRepository.save(quiz);
         return mapToResponse(quiz);
     }
 
-    public void uploadQuestions(Long quizId, MultipartFile file) {
+    public void deleteQuiz(Long id) {
+        Quiz quiz = quizRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + id));
+        try {
+            quizRepository.delete(quiz);
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalStateException(
+                    "Cannot delete this quiz because students have already attempted it. Archive it instead to remove it from view.");
+        }
+    }
+
+    public QuizResponse uploadQuestions(Long quizId, MultipartFile file) {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + quizId));
         if (!quiz.getStatus().equals(QuizStatus.DRAFT)) {
             throw new IllegalStateException("Questions can only be uploaded for quizzes in DRAFT status");
         }
 
-        List<Question> questions = new ArrayList<>();
+        List<Question> newQuestions = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             String line;
             boolean isFirstLine = true;
             while ((line = br.readLine()) != null) {
                 if (isFirstLine) {
                     isFirstLine = false;
-                    continue; // skip header
+                    continue;
                 }
-                String[] values = line.split(",", -1); // -1 to keep trailing empty strings
+                String[] values = line.split(",", -1);
                 if (values.length < 7) {
                     throw new IllegalStateException("Invalid CSV format. Expected 7 columns, got " + values.length);
                 }
@@ -142,23 +153,32 @@ public class QuizService {
                 String correctAnswer = values[5].trim().toUpperCase();
                 String questionTypeStr = values[6].trim().toUpperCase();
 
-                // Validate
                 if (questionText.isEmpty()) {
                     throw new IllegalStateException("Question text is required");
                 }
-                if (optionA.isEmpty() || optionB.isEmpty() || optionC.isEmpty() || optionD.isEmpty()) {
-                    throw new IllegalStateException("All options A, B, C, D are required");
-                }
-                if (!correctAnswer.matches("[A-D]") && !questionTypeStr.equals(QuestionType.TRUE_FALSE.name())) {
-                    // For MCQ, correct answer must be A-D; for TRUE_FALSE, must be TRUE or FALSE
-                    if (questionTypeStr.equals(QuestionType.MCQ.name()) && !correctAnswer.matches("[A-D]")) {
+
+                // Resolve the type FIRST — option-completeness rules differ by
+                // type, so validating options before we know the type (the
+                // previous bug) incorrectly forced TRUE_FALSE rows to supply
+                // options C and D, which your documented CSV format explicitly
+                // leaves blank for that type.
+                QuestionType questionType = stringToQuestionType(questionTypeStr);
+
+                if (questionType == QuestionType.MCQ) {
+                    if (optionA.isEmpty() || optionB.isEmpty() || optionC.isEmpty() || optionD.isEmpty()) {
+                        throw new IllegalStateException("All options A, B, C, D are required for MCQ questions");
+                    }
+                    if (!correctAnswer.matches("[A-D]")) {
                         throw new IllegalStateException("For MCQ, correct answer must be A, B, C, or D");
                     }
-                    if (questionTypeStr.equals(QuestionType.TRUE_FALSE.name()) && !correctAnswer.matches("(TRUE|FALSE)")) {
+                } else { // TRUE_FALSE
+                    if (optionA.isEmpty() || optionB.isEmpty()) {
+                        throw new IllegalStateException("Options A and B (True/False) are required for True/False questions");
+                    }
+                    if (!correctAnswer.matches("(TRUE|FALSE)")) {
                         throw new IllegalStateException("For TRUE_FALSE, correct answer must be TRUE or FALSE");
                     }
                 }
-                QuestionType questionType = stringToQuestionType(questionTypeStr);
 
                 Question question = new Question();
                 question.setQuizId(quizId);
@@ -169,25 +189,26 @@ public class QuizService {
                 question.setOptionD(optionD);
                 question.setCorrectAnswer(correctAnswer);
                 question.setQuestionType(questionType);
-                question.setCreatedAt(java.time.LocalDateTime.now());
-                question.setUpdatedAt(java.time.LocalDateTime.now());
-                questions.add(question);
+                question.setCreatedAt(LocalDateTime.now());
+                question.setUpdatedAt(LocalDateTime.now());
+                newQuestions.add(question);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse CSV file", e);
         }
 
-        if (questions.isEmpty()) {
+        if (newQuestions.isEmpty()) {
             throw new IllegalStateException("No valid questions found in CSV");
         }
 
-        // Save questions
-        questionRepository.saveAll(questions);
+        questionRepository.saveAll(newQuestions);
 
-        // Update quiz total_questions
-        quiz.setTotalQuestions(questions.size());
-        quiz.setUpdatedAt(java.time.LocalDateTime.now());
+        int actualTotal = questionRepository.findByQuizId(quizId).size();
+        quiz.setTotalQuestions(actualTotal);
+        quiz.setUpdatedAt(LocalDateTime.now());
         quizRepository.save(quiz);
+
+        return mapToResponse(quiz);
     }
 
     private QuizResponse mapToResponse(Quiz quiz) {
@@ -212,6 +233,7 @@ public class QuizService {
                     );
                 })
                 .collect(Collectors.toList());
+
         return new QuizResponse(
                 quiz.getId(),
                 quiz.getCategoryId(),
@@ -219,7 +241,7 @@ public class QuizService {
                 quiz.getDescription(),
                 quiz.getDifficulty().name(),
                 quiz.getDurationMinutes(),
-                quiz.getTotalQuestions(),
+                questionDtos.size(),
                 quiz.getStatus().name(),
                 quiz.getCreatedBy(),
                 questionDtos

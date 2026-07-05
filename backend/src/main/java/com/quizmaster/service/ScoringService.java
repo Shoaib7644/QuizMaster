@@ -27,6 +27,8 @@ public class ScoringService {
                 attempt.getId(),
                 attempt.getUserId(),
                 attempt.getQuizId(),
+                null, // quizTitle
+                null, // categoryName
                 attempt.getScore(),
                 attempt.getPercentage().doubleValue(),
                 attempt.getTotalQuestions(),

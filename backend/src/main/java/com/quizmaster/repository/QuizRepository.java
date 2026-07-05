@@ -16,4 +16,5 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
     List<Quiz> findByStatus(QuizStatus status);
     List<Quiz> findByCreatedBy(Long createdBy);
     Optional<Quiz> findByIdAndStatus(Long id, QuizStatus status);
+    List<Quiz> findByCategoryIdAndStatus(Long categoryId, QuizStatus status);
 }

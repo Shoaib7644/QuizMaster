@@ -1,6 +1,5 @@
 package com.quizmaster.dto;
 
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -23,11 +22,11 @@ public class QuizRequest {
     @Min(value = 1, message = "Duration must be at least 1 minute")
     private Integer durationMinutes;
 
-    @NotNull(message = "Total questions is required")
-    @Min(value = 1, message = "Total questions must be at least 1")
-    private Integer totalQuestions;
+    // totalQuestions intentionally removed: it is derived from actual
+    // Question rows (see QuizService.mapToResponse / uploadQuestions) and
+    // must never be client-supplied. A quiz starts at 0 questions on
+    // creation and only increases via the CSV upload endpoint.
 
-    // Getters and Setters
     public Long getCategoryId() {
         return categoryId;
     }
@@ -66,13 +65,5 @@ public class QuizRequest {
 
     public void setDurationMinutes(Integer durationMinutes) {
         this.durationMinutes = durationMinutes;
-    }
-
-    public Integer getTotalQuestions() {
-        return totalQuestions;
-    }
-
-    public void setTotalQuestions(Integer totalQuestions) {
-        this.totalQuestions = totalQuestions;
     }
 }

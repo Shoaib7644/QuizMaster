@@ -1,173 +1,83 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { createQuiz } from '../../services/quizApi';
+import { getAllCategories } from '../../services/categoryApi';
+import QuizForm from './QuizForm';
+import QuestionUploadPanel from './QuestionUploadPanel';
 
 const CreateQuizPage = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    categoryId: '',
-    difficulty: '',
-    durationMinutes: '',
-    totalQuestions: '',
-  });
+  const [categories, setCategories] = useState([]);
+  const [categoriesError, setCategoriesError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [createdQuiz, setCreatedQuiz] = useState(null); // null until quiz metadata is saved
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getAllCategories();
+        setCategories((data || []).filter((c) => c.isActive));
+      } catch (err) {
+        setCategoriesError(err.message || 'Unable to load categories.');
+      }
+    })();
+  }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess(false);
-
+  const handleSubmit = async (payload) => {
+    setSubmitting(true);
+    setSubmitError('');
     try {
-      await createQuiz(formData);
-      setSuccess(true);
-      setTimeout(() => {
-        navigate('/admin/quizzes');
-      }, 1500);
+      const quiz = await createQuiz(payload);
+      setCreatedQuiz(quiz); // advance to step 2: upload questions
     } catch (err) {
-      setError('Failed to create quiz. Please try again.');
+      setSubmitError(err.message || 'Failed to create quiz. Please try again.');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  if (success) {
+  // Step 2: quiz metadata exists as a DRAFT — now upload questions and publish.
+  if (createdQuiz) {
     return (
-      <div className="p-6">
-        <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
-          <p className="text-green-800">Quiz created successfully!</p>
+        <div className="p-6 space-y-6">
+          <div className="bg-green-50 border-l-4 border-green-500 p-4">
+            <p className="text-green-800">
+              "{createdQuiz.title}" was created as a draft. Upload questions to finish setting it up.
+            </p>
+          </div>
+
+          <QuestionUploadPanel
+              quiz={createdQuiz}
+              onQuizUpdated={setCreatedQuiz}
+              onPublished={() => navigate('/admin/quizzes')}
+          />
+
+          <button
+              type="button"
+              onClick={() => navigate('/admin/quizzes')}
+              className="text-sm text-blue-600 hover:text-blue-500"
+          >
+            I'll upload questions later — back to Quiz List
+          </button>
         </div>
-        <a
-          href="/admin/quizzes"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          Back to Quiz List
-        </a>
-      </div>
     );
   }
 
+  // Step 1: quiz metadata
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Create New Quiz</h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="title" className="block mb-2 text-sm font-medium text-gray-700">
-            Title
-          </label>
-          <input
-            id="title"
-            type="text"
-            required
-            name="title"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            value={formData.title}
-            onChange={handleChange}
-          />
-        </div>
-        <div>
-          <label htmlFor="description" className="block mb-2 text-sm font-medium text-gray-700">
-            Description
-          </label>
-          <textarea
-            id="description"
-            rows="4"
-            name="description"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            value={formData.description}
-            onChange={handleChange}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="categoryId" className="block mb-2 text-sm font-medium text-gray-700">
-              Category ID
-            </label>
-            <input
-              id="categoryId"
-              type="number"
-              name="categoryId"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={formData.categoryId}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label htmlFor="difficulty" className="block mb-2 text-sm font-medium text-gray-700">
-              Difficulty
-            </label>
-            <select
-              id="difficulty"
-              name="difficulty"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={formData.difficulty}
-              onChange={handleChange}
-            >
-              <option value="">Select Difficulty</option>
-              <option value="EASY">Easy</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HARD">Hard</option>
-            </select>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="durationMinutes" className="block mb-2 text-sm font-medium text-gray-700">
-              Duration (minutes)
-            </label>
-            <input
-              id="durationMinutes"
-              type="number"
-              name="durationMinutes"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={formData.durationMinutes}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label htmlFor="totalQuestions" className="block mb-2 text-sm font-medium text-gray-700">
-              Total Questions
-            </label>
-            <input
-              id="totalQuestions"
-              type="number"
-              name="totalQuestions"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={formData.totalQuestions}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
-        {error && (
-          <p className="text-red-600 text-sm">{error}</p>
-        )}
-        <div className="pt-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            {loading ? 'Creating...' : 'Create Quiz'}
-          </button>
-        </div>
-      </form>
-    </div>
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-4">Create New Quiz</h1>
+        <QuizForm
+            categories={categories}
+            categoriesError={categoriesError}
+            onSubmit={handleSubmit}
+            submitLabel="Create Quiz"
+            submitting={submitting}
+            submitError={submitError}
+        />
+      </div>
   );
 };
 

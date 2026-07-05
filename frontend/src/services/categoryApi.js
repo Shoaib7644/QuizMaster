@@ -19,3 +19,23 @@ export const deleteCategory = async (categoryId) => {
   const response = await axiosInstance.delete(`/categories/${categoryId}`);
   return response.data;
 };
+
+// Returns CategoryResponse[]: [{ id, name, description, isActive }]
+export const getAllCategories = async () => {
+  const response = await axiosInstance.get('/categories');
+  return response.data;
+};
+
+// Returns CategoryResponse: { id, name, description, isActive }
+export const getCategoryById = async (categoryId) => {
+  const response = await axiosInstance.get(`/categories/${categoryId}`);
+  return response.data;
+};
+
+// Returns CategorySummaryDto: { id, name, description, quizzes: QuizSummaryDto[] }
+// QuizSummaryDto: { id, title, description, difficulty, durationMinutes, totalQuestions }
+// Only PUBLISHED quizzes are included — filtered by the backend.
+export const getQuizzesByCategory = async (categoryId) => {
+  const response = await axiosInstance.get(`/categories/${categoryId}/quizzes`);
+  return response.data;
+};

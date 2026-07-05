@@ -2,6 +2,7 @@ package com.quizmaster.controller;
 
 import com.quizmaster.dto.CategoryRequest;
 import com.quizmaster.dto.CategoryResponse;
+import com.quizmaster.dto.CategorySummaryDto;
 import com.quizmaster.service.CategoryService;
 import com.quizmaster.util.ApiResponse;
 import jakarta.validation.Valid;
@@ -26,9 +27,17 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<CategoryResponse>> getCategoryById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<CategoryResponse>> getCategoryById(
+            @PathVariable("id") Long id) {
         CategoryResponse category = categoryService.getCategoryById(id);
         return ResponseEntity.ok(ApiResponse.success(category));
+    }
+
+    @GetMapping("/{categoryId}/quizzes")
+    public ResponseEntity<ApiResponse<CategorySummaryDto>> getCategoryQuizzes(
+            @PathVariable("categoryId") Long categoryId) {
+        CategorySummaryDto response = categoryService.getCategoryQuizzes(categoryId);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping
@@ -40,14 +49,16 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryRequest request) {
+    public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(
+            @PathVariable("id") Long id, @Valid @RequestBody CategoryRequest request) {
         CategoryResponse category = categoryService.updateCategory(id, request);
         return ResponseEntity.ok(ApiResponse.success(category, "Category updated successfully"));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteCategory(
+            @PathVariable("id") Long id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Category deleted successfully"));
     }
