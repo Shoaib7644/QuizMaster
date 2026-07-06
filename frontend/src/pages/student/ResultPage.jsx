@@ -1,11 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useParams, useNavigate } from 'react-router-dom';
+import { CheckCircle2, XCircle, HelpCircle, Award } from 'lucide-react';
 import { getResultByAttemptId } from '../../services/resultApi';
+import PageHeader from '../../components/ui/PageHeader';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import ProgressBar from '../../components/ui/ProgressBar';
+
+const formatPercentage = (value) =>
+    typeof value === 'number' ? `${value.toFixed(2)}%` : 'N/A';
+
+const formatDateTime = (value) => {
+  if (!value) return 'N/A';
+  const parsed = new Date(value);
+  return isNaN(parsed.getTime()) ? 'N/A' : parsed.toLocaleString();
+};
 
 const ResultPage = () => {
-  const { user } = useAuth();
   const { attemptId } = useParams();
+  const navigate = useNavigate();
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -20,86 +33,78 @@ const ResultPage = () => {
         setLoading(false);
       }
     };
-
     fetchResult();
   }, [attemptId]);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>;
+    return <div className="flex items-center justify-center h-64 text-text-secondary">Loading...</div>;
   }
 
   if (!result) {
-    return <div className="p-6">Result not found.</div>;
+    return (
+        <div className="max-w-2xl mx-auto p-6">
+          <p className="text-text-secondary">Result not found.</p>
+        </div>
+    );
   }
 
-  // Null-safe formatting helpers. FR-8 / US-013 only guarantee these fields
-  // exist on a submitted attempt, but we defend against nulls anyway so a
-  // partially-populated or unexpected payload never crashes the render.
-  const formatPercentage = (value) =>
-    typeof value === 'number' ? `${value.toFixed(2)}%` : 'N/A';
-
-  const formatDateTime = (value) => {
-    if (!value) return 'N/A';
-    const parsed = new Date(value);
-    return isNaN(parsed.getTime()) ? 'N/A' : parsed.toLocaleString();
-  };
+  const percentageValue = typeof result.percentage === 'number' ? result.percentage : 0;
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Quiz Result</h1>
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <p className="mb-2">
-          <strong>Started:</strong> {formatDateTime(result.startedAt)}
-        </p>
-        <p className="mb-2">
-          <strong>Submitted:</strong> {formatDateTime(result.submittedAt)}
-        </p>
+      <div className="max-w-3xl mx-auto p-6">
+        <PageHeader title="Quiz Result" />
 
-        <div className="mt-4">
-          <h2 className="text-xl font-semibold mb-2">Score</h2>
-          <p className="text-2xl font-bold">
+        <Card className="text-center mb-6">
+          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+            <Award size={26} className="text-primary" />
+          </div>
+          <p className="text-3xl font-semibold text-text-primary mt-4">
             {result.score ?? 0} / {result.totalQuestions ?? 0}
           </p>
-          <p className="text-gray-600">{formatPercentage(result.percentage)}</p>
+          <p className="text-text-secondary mt-1">{formatPercentage(result.percentage)}</p>
+          <div className="max-w-xs mx-auto mt-4">
+            <ProgressBar percentage={percentageValue} />
+          </div>
+        </Card>
+
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-6">
+          <Card className="text-center">
+            <CheckCircle2 size={20} className="text-success mx-auto" />
+            <p className="text-xs text-text-secondary mt-2">Correct</p>
+            <p className="text-xl font-semibold text-success">{result.correctAnswers ?? 0}</p>
+          </Card>
+          <Card className="text-center">
+            <XCircle size={20} className="text-danger mx-auto" />
+            <p className="text-xs text-text-secondary mt-2">Incorrect</p>
+            <p className="text-xl font-semibold text-danger">{result.incorrectAnswers ?? 0}</p>
+          </Card>
+          <Card className="text-center">
+            <HelpCircle size={20} className="text-text-secondary mx-auto" />
+            <p className="text-xs text-text-secondary mt-2">Total Questions</p>
+            <p className="text-xl font-semibold text-text-primary">{result.totalQuestions ?? 0}</p>
+          </Card>
+          <Card className="text-center">
+            <Award size={20} className="text-primary mx-auto" />
+            <p className="text-xs text-text-secondary mt-2">Total Points</p>
+            <p className="text-xl font-semibold text-text-primary">{result.totalPoints ?? 0}</p>
+          </Card>
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="border rounded-lg p-4 text-center">
-            <p className="text-sm text-gray-500">Correct Answers</p>
-            <p className="text-xl font-semibold text-green-600">
-              {result.correctAnswers ?? 0}
-            </p>
+        <Card className="mb-6">
+          <div className="flex justify-between text-sm">
+            <span className="text-text-secondary">Started</span>
+            <span className="text-text-primary font-medium">{formatDateTime(result.startedAt)}</span>
           </div>
-          <div className="border rounded-lg p-4 text-center">
-            <p className="text-sm text-gray-500">Incorrect Answers</p>
-            <p className="text-xl font-semibold text-red-600">
-              {result.incorrectAnswers ?? 0}
-            </p>
+          <div className="flex justify-between text-sm mt-2">
+            <span className="text-text-secondary">Submitted</span>
+            <span className="text-text-primary font-medium">{formatDateTime(result.submittedAt)}</span>
           </div>
-          <div className="border rounded-lg p-4 text-center">
-            <p className="text-sm text-gray-500">Total Questions</p>
-            <p className="text-xl font-semibold">
-              {result.totalQuestions ?? 0}
-            </p>
-          </div>
-          <div className="border rounded-lg p-4 text-center">
-            <p className="text-sm text-gray-500">Total Points</p>
-            <p className="text-xl font-semibold">
-              {result.totalPoints ?? 0}
-            </p>
-          </div>
-        </div>
+        </Card>
 
-        <div className="mt-6">
-          <a
-            href="/quizzes"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Back to Quizzes
-          </a>
-        </div>
+        <Button variant="secondary" onClick={() => navigate('/quizzes')}>
+          Back to Quizzes
+        </Button>
       </div>
-    </div>
   );
 };
 

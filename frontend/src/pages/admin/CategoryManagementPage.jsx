@@ -1,15 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { getCategories, createCategory, deleteCategory } from '../../services/categoryApi';
+import PageHeader from '../../components/ui/PageHeader';
+import SectionHeader from '../../components/ui/SectionHeader';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+
+const inputClass =
+    'w-full px-4 py-2.5 border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary';
+const labelClass = 'block mb-1.5 text-sm font-medium text-text-primary';
 
 const CategoryManagementPage = () => {
-  const { user } = useAuth();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newCategory, setNewCategory] = useState({ name: '', description: '' });
   const [adding, setAdding] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [formError, setFormError] = useState('');
+  const [deleteError, setDeleteError] = useState('');
 
   const loadCategories = async () => {
     try {
@@ -49,8 +56,6 @@ const CategoryManagementPage = () => {
     }
   };
 
-  const [deleteError, setDeleteError] = useState('');
-
   const handleDelete = async (categoryId) => {
     setDeleting(categoryId);
     setDeleteError('');
@@ -65,87 +70,74 @@ const CategoryManagementPage = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>;
+    return <div className="flex items-center justify-center h-64 text-text-secondary">Loading...</div>;
   }
 
   return (
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Category Management</h1>
-        </div>
+      <div className="max-w-3xl mx-auto p-6">
+        <PageHeader title="Category Management" />
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="font-semibold text-lg mb-4">Add New Category</h2>
+        <Card className="mb-6">
+          <SectionHeader title="Add New Category" />
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="categoryName" className="block mb-2 text-sm font-medium text-gray-700">
-                Name
-              </label>
+              <label htmlFor="categoryName" className={labelClass}>Name</label>
               <input
                   id="categoryName"
                   type="text"
                   required
                   name="name"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={inputClass}
                   value={newCategory.name}
                   onChange={handleChange}
               />
             </div>
             <div>
-              <label htmlFor="categoryDescription" className="block mb-2 text-sm font-medium text-gray-700">
-                Description
-              </label>
+              <label htmlFor="categoryDescription" className={labelClass}>Description</label>
               <textarea
                   id="categoryDescription"
                   rows="3"
                   name="description"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={inputClass}
                   value={newCategory.description}
                   onChange={handleChange}
               />
             </div>
-            {formError && <p className="text-red-600 text-sm">{formError}</p>}
-            <div className="pt-4">
-              <button
-                  type="submit"
-                  disabled={adding}
-                  className="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-60"
-              >
-                {adding ? 'Adding...' : 'Add Category'}
-              </button>
-            </div>
+            {formError && <p role="alert" className="text-danger text-sm">{formError}</p>}
+            <Button type="submit" disabled={adding} className="w-full">
+              {adding ? 'Adding...' : 'Add Category'}
+            </Button>
           </form>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <Card>
+          <SectionHeader title="Existing Categories" />
           {deleteError && (
-              <p role="alert" className="text-red-600 text-sm mb-4">{deleteError}</p>
+              <p role="alert" className="text-danger text-sm mb-4">{deleteError}</p>
           )}
-          <h2 className="font-semibold text-lg mb-4">Existing Categories</h2>
           {categories.length === 0 ? (
-              <p className="text-gray-500">No categories found.</p>
+              <p className="text-text-secondary text-sm">No categories found.</p>
           ) : (
-              <div className="divide-y">
+              <div className="divide-y divide-border">
                 {categories.map((category) => (
-                    <div key={category.id} className="py-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h3 className="font-semibold text-lg">{category.name}</h3>
-                          <p className="text-gray-600">{category.description}</p>
-                        </div>
-                        <button
-                            onClick={() => handleDelete(category.id)}
-                            disabled={deleting === category.id}
-                            className="text-sm text-red-600 hover:text-red-500"
-                        >
-                          {deleting === category.id ? 'Deleting...' : 'Delete'}
-                        </button>
+                    <div key={category.id} className="py-4 flex justify-between items-center gap-4">
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-text-primary">{category.name}</h3>
+                        <p className="text-text-secondary text-sm">{category.description}</p>
                       </div>
+                      <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDelete(category.id)}
+                          disabled={deleting === category.id}
+                      >
+                        {deleting === category.id ? 'Deleting...' : 'Delete'}
+                      </Button>
                     </div>
                 ))}
               </div>
           )}
-        </div>
+        </Card>
       </div>
   );
 };

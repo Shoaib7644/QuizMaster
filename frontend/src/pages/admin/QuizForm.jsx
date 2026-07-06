@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Button from '../../components/ui/Button';
 
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'];
 
@@ -9,6 +10,10 @@ const emptyForm = {
     difficulty: '',
     durationMinutes: '',
 };
+
+const inputClass =
+    'w-full px-4 py-2.5 border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-slate-50 disabled:text-text-secondary';
+const labelClass = 'block mb-1.5 text-sm font-medium text-text-primary';
 
 const QuizForm = ({
                       initialValues,
@@ -53,29 +58,25 @@ const QuizForm = ({
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-                <label htmlFor="title" className="block mb-2 text-sm font-medium text-gray-700">
-                    Title
-                </label>
+                <label htmlFor="title" className={labelClass}>Title</label>
                 <input
                     id="title"
                     type="text"
                     required
                     name="title"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={inputClass}
                     value={formData.title}
                     onChange={handleChange}
                 />
             </div>
 
             <div>
-                <label htmlFor="description" className="block mb-2 text-sm font-medium text-gray-700">
-                    Description
-                </label>
+                <label htmlFor="description" className={labelClass}>Description</label>
                 <textarea
                     id="description"
                     rows="4"
                     name="description"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={inputClass}
                     value={formData.description}
                     onChange={handleChange}
                 />
@@ -83,48 +84,40 @@ const QuizForm = ({
 
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label htmlFor="categoryId" className="block mb-2 text-sm font-medium text-gray-700">
-                        Category
-                    </label>
+                    <label htmlFor="categoryId" className={labelClass}>Category</label>
                     <select
                         id="categoryId"
                         name="categoryId"
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={inputClass}
                         value={formData.categoryId}
                         onChange={handleChange}
                         disabled={categories.length === 0}
                     >
                         <option value="">Select Category</option>
                         {categories.map((c) => (
-                            <option key={c.id} value={c.id}>
-                                {c.name}
-                            </option>
+                            <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                     </select>
-                    {categoriesError && <p className="text-red-600 text-xs mt-1">{categoriesError}</p>}
+                    {categoriesError && <p className="text-danger text-xs mt-1">{categoriesError}</p>}
                     {!categoriesError && categories.length === 0 && (
-                        <p className="text-gray-500 text-xs mt-1">No active categories yet — create one first.</p>
+                        <p className="text-text-secondary text-xs mt-1">No active categories yet — create one first.</p>
                     )}
                 </div>
 
                 <div>
-                    <label htmlFor="difficulty" className="block mb-2 text-sm font-medium text-gray-700">
-                        Difficulty
-                    </label>
+                    <label htmlFor="difficulty" className={labelClass}>Difficulty</label>
                     <select
                         id="difficulty"
                         name="difficulty"
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={inputClass}
                         value={formData.difficulty}
                         onChange={handleChange}
                     >
                         <option value="">Select Difficulty</option>
                         {DIFFICULTIES.map((d) => (
-                            <option key={d} value={d}>
-                                {d.charAt(0) + d.slice(1).toLowerCase()}
-                            </option>
+                            <option key={d} value={d}>{d.charAt(0) + d.slice(1).toLowerCase()}</option>
                         ))}
                     </select>
                 </div>
@@ -132,43 +125,35 @@ const QuizForm = ({
 
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label htmlFor="durationMinutes" className="block mb-2 text-sm font-medium text-gray-700">
-                        Duration (minutes)
-                    </label>
+                    <label htmlFor="durationMinutes" className={labelClass}>Duration (minutes)</label>
                     <input
                         id="durationMinutes"
                         type="number"
                         min="1"
                         required
                         name="durationMinutes"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={inputClass}
                         value={formData.durationMinutes}
                         onChange={handleChange}
                     />
                 </div>
 
                 <div>
-                    <span className="block mb-2 text-sm font-medium text-gray-700">Total Questions</span>
-                    <div className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700">
+                    <span className={labelClass}>Total Questions</span>
+                    <div className="w-full px-4 py-2.5 border border-border rounded-lg bg-background text-text-secondary text-sm">
                         {questionCount} {questionCount === 1 ? 'question' : 'questions'}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-text-secondary mt-1">
                         Calculated automatically from uploaded questions — not directly editable.
                     </p>
                 </div>
             </div>
 
-            {submitError && <p className="text-red-600 text-sm">{submitError}</p>}
+            {submitError && <p role="alert" className="text-danger text-sm">{submitError}</p>}
 
-            <div className="pt-4">
-                <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60"
-                >
-                    {submitting ? `${submitLabel}...` : submitLabel}
-                </button>
-            </div>
+            <Button type="submit" disabled={submitting} className="w-full" size="lg">
+                {submitting ? `${submitLabel}...` : submitLabel}
+            </Button>
         </form>
     );
 };

@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
+import { Upload } from 'lucide-react';
 import { uploadQuestions, publishQuiz } from '../../services/quizApi';
+import Card from '../../components/ui/Card';
+import Badge from '../../components/ui/Badge';
+import Button from '../../components/ui/Button';
 
 const QuestionUploadPanel = ({ quiz, onQuizUpdated, onPublished }) => {
     const [file, setFile] = useState(null);
@@ -55,24 +59,26 @@ const QuestionUploadPanel = ({ quiz, onQuizUpdated, onPublished }) => {
 
     if (!isDraft) {
         return (
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="font-semibold text-lg mb-2">Questions</h2>
-                <p className="text-gray-600">
-                    This quiz is {quiz.status.toLowerCase()} and has {quiz.totalQuestions} question(s).
-                    Questions can only be uploaded while a quiz is in Draft status.
+            <Card>
+                <div className="flex items-center gap-2 mb-2">
+                    <h2 className="font-semibold text-text-primary">Questions</h2>
+                    <Badge variant={quiz.status}>{quiz.status}</Badge>
+                </div>
+                <p className="text-text-secondary text-sm">
+                    This quiz has {quiz.totalQuestions} question(s). Questions can only be uploaded while a quiz is in Draft status.
                 </p>
-            </div>
+            </Card>
         );
     }
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
+        <Card className="space-y-6">
             <div>
-                <h2 className="font-semibold text-lg mb-2">Upload Questions</h2>
-                <p className="text-sm text-gray-600 mb-1">
-                    Currently <strong>{quiz.totalQuestions}</strong> question(s) on this quiz.
+                <h2 className="font-semibold text-text-primary mb-2">Upload Questions</h2>
+                <p className="text-sm text-text-secondary mb-1">
+                    Currently <strong className="text-text-primary">{quiz.totalQuestions}</strong> question(s) on this quiz.
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-text-secondary">
                     CSV columns, in order: question_text, option_a, option_b, option_c, option_d,
                     correct_answer, question_type (MCQ or TRUE_FALSE). For TRUE_FALSE rows, leave
                     option_c and option_d blank and correct_answer as TRUE or FALSE.
@@ -80,41 +86,44 @@ const QuestionUploadPanel = ({ quiz, onQuizUpdated, onPublished }) => {
             </div>
 
             <form onSubmit={handleUpload} className="space-y-4">
+                <label
+                    htmlFor="csv-upload"
+                    className="flex items-center gap-3 border border-dashed border-border rounded-lg px-4 py-3 text-sm text-text-secondary cursor-pointer hover:border-primary hover:text-primary transition-colors"
+                >
+                    <Upload size={18} />
+                    {file ? file.name : 'Choose a CSV file'}
+                </label>
                 <input
+                    id="csv-upload"
                     type="file"
                     accept=".csv"
                     onChange={handleFileChange}
-                    className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer"
+                    className="hidden"
                 />
-                {uploadError && <p className="text-red-600 text-sm">{uploadError}</p>}
-                {uploadSuccess && <p className="text-green-700 text-sm">{uploadSuccess}</p>}
-                <button
-                    type="submit"
-                    disabled={uploading || !file}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60"
-                >
+                {uploadError && <p role="alert" className="text-danger text-sm">{uploadError}</p>}
+                {uploadSuccess && <p className="text-success text-sm">{uploadSuccess}</p>}
+                <Button type="submit" disabled={uploading || !file}>
                     {uploading ? 'Uploading...' : 'Upload CSV'}
-                </button>
+                </Button>
             </form>
 
-            <div className="border-t pt-4">
-                {publishError && <p className="text-red-600 text-sm mb-2">{publishError}</p>}
-                <button
-                    type="button"
+            <div className="border-t border-border pt-4">
+                {publishError && <p role="alert" className="text-danger text-sm mb-2">{publishError}</p>}
+                <Button
+                    variant="primary"
                     onClick={handlePublish}
                     disabled={!canPublish || publishing}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-60"
                     title={canPublish ? undefined : 'Upload at least one question before publishing'}
                 >
                     {publishing ? 'Publishing...' : 'Publish Quiz'}
-                </button>
+                </Button>
                 {!canPublish && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-text-secondary mt-1">
                         Upload at least one question before this quiz can be published.
                     </p>
                 )}
             </div>
-        </div>
+        </Card>
     );
 };
 

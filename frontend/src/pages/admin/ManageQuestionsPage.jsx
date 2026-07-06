@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { getQuizById } from '../../services/quizApi';
+import PageHeader from '../../components/ui/PageHeader';
 import QuestionUploadPanel from './QuestionUploadPanel';
 
 const ManageQuestionsPage = () => {
@@ -27,37 +29,34 @@ const ManageQuestionsPage = () => {
     }, [id]);
 
     if (loading) {
-        return <div className="flex items-center justify-center h-64">Loading...</div>;
+        return <div className="flex items-center justify-center h-64 text-text-secondary">Loading...</div>;
     }
 
     if (loadError) {
         return (
-            <div className="p-6">
-                <p role="alert" className="text-red-600">{loadError}</p>
+            <div className="max-w-2xl mx-auto p-6">
+                <p role="alert" className="text-danger">{loadError}</p>
             </div>
         );
     }
 
     return (
-        <div className="p-6 space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold">{quiz.title}</h1>
-                <p className="text-gray-500 text-sm mt-1">Manage questions for this quiz.</p>
-            </div>
+        <div className="max-w-2xl mx-auto p-6 space-y-6">
+            <button
+                onClick={() => navigate('/admin/quizzes')}
+                className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
+            >
+                <ArrowLeft size={16} />
+                Back to Quiz List
+            </button>
+
+            <PageHeader title={quiz.title} subtitle="Manage questions for this quiz." />
 
             <QuestionUploadPanel
                 quiz={quiz}
                 onQuizUpdated={setQuiz}
                 onPublished={() => navigate('/admin/quizzes')}
             />
-
-            <button
-                type="button"
-                onClick={() => navigate('/admin/quizzes')}
-                className="text-sm text-blue-600 hover:text-blue-500"
-            >
-                Back to Quiz List
-            </button>
         </div>
     );
 };

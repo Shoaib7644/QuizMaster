@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -15,8 +17,6 @@ const LoginPage = () => {
     setSubmitting(true);
     setError('');
     try {
-      // loginUser() is the ONLY thing this page does. Token storage,
-      // profile fetching, and session state all live in AuthContext.
       const user = await loginUser({ email, password });
       navigate(user.role === 'ADMIN' ? '/admin' : '/dashboard');
     } catch (err) {
@@ -27,65 +27,61 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">
-            Login to QuizMaster
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                autoComplete="email"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                autoComplete="current-password"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            {error && (
-              <p role="alert" className="text-red-600 text-sm">
-                {error}
-              </p>
-            )}
-            <div className="pt-4">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60"
-              >
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-semibold text-text-primary">QuizMaster</h1>
+          </div>
+          <Card>
+            <h2 className="text-lg font-semibold text-text-primary mb-1">Welcome back</h2>
+            <p className="text-sm text-text-secondary mb-6">Log in to continue learning.</p>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label htmlFor="email" className="block mb-1.5 text-sm font-medium text-text-primary">
+                  Email
+                </label>
+                <input
+                    id="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    className="w-full px-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="block mb-1.5 text-sm font-medium text-text-primary">
+                  Password
+                </label>
+                <input
+                    id="password"
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    className="w-full px-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              {error && (
+                  <p role="alert" className="text-danger text-sm">{error}</p>
+              )}
+              <Button type="submit" disabled={submitting} className="w-full">
                 {submitting ? 'Logging in...' : 'Login'}
-              </button>
-            </div>
-          </form>
-          <p className="mt-6 text-center text-sm text-gray-500">
-            Don't have an account?{' '}
-            <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              Register here
-            </a>
-          </p>
+              </Button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-text-secondary">
+              Don't have an account?{' '}
+              <a href="/register" className="font-medium text-primary hover:text-primary-hover">
+                Register here
+              </a>
+            </p>
+          </Card>
         </div>
       </div>
-    </div>
   );
 };
 

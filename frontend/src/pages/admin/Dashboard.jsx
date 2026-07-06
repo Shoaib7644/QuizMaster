@@ -1,60 +1,60 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { BookOpen, FolderTree, BarChart3 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import PageHeader from '../../components/ui/PageHeader';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+
+const ADMIN_ACTIONS = [
+  {
+    icon: BookOpen,
+    title: 'Quiz Management',
+    description: 'Create, update, delete quizzes and manage questions.',
+    to: '/admin/quizzes',
+    cta: 'Manage Quizzes',
+  },
+  {
+    icon: FolderTree,
+    title: 'Category Management',
+    description: 'Create and manage categories for quizzes.',
+    to: '/admin/categories',
+    cta: 'Manage Categories',
+  },
+  {
+    icon: BarChart3,
+    title: 'Analytics',
+    description: 'View quiz attempts, scores, and other statistics.',
+    to: '/admin/analytics',
+    cta: 'View Analytics',
+  },
+];
 
 const AdminDashboard = () => {
   const { user } = useAuth();
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
-      <p className="mb-6">
-        Welcome, {user?.firstName}. You have access to the following admin functionalities:
-      </p>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-        >
-          <h2 className="font-semibold text-lg mb-2">Quiz Management</h2>
-          <p className="text-gray-600 mb-4">
-            Create, update, delete quizzes and manage questions.
-          </p>
-          <a
-            href="/admin/quizzes"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Manage Quizzes
-          </a>
-        </div>
-        <div
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-        >
-          <h2 className="font-semibold text-lg mb-2">Category Management</h2>
-          <p className="text-gray-600 mb-4">
-            Create and manage categories for quizzes.
-          </p>
-          <a
-            href="/admin/categories"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Manage Categories
-          </a>
-        </div>
-        <div
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-        >
-          <h2 className="font-semibold text-lg mb-2">Analytics</h2>
-          <p className="text-gray-600 mb-4">
-            View quiz attempts, scores, and other statistics.
-          </p>
-          <a
-            href="/admin/analytics"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            View Analytics
-          </a>
+      <div className="max-w-5xl mx-auto p-6">
+        <PageHeader
+            title="Admin Dashboard"
+            subtitle={`Welcome, ${user?.firstName ?? 'Admin'}. Here's what you can manage today.`}
+        />
+
+        <div className="grid gap-6 md:grid-cols-3">
+          {ADMIN_ACTIONS.map(({ icon: Icon, title, description, to, cta }) => (
+              <Card key={to} className="flex flex-col">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Icon size={20} className="text-primary" />
+                </div>
+                <h2 className="font-semibold text-text-primary">{title}</h2>
+                <p className="text-text-secondary text-sm mt-2 flex-1">{description}</p>
+                <Link to={to} className="mt-5">
+                  <Button variant="secondary" className="w-full">{cta}</Button>
+                </Link>
+              </Card>
+          ))}
         </div>
       </div>
-    </div>
   );
 };
 

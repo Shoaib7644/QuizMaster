@@ -1,13 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getQuizzes } from '../../services/quizApi';
 import { getAllCategories } from '../../services/categoryApi';
-
-const DIFFICULTY_STYLES = {
-  EASY: 'bg-green-100 text-green-700',
-  MEDIUM: 'bg-yellow-100 text-yellow-700',
-  HARD: 'bg-red-100 text-red-700',
-};
+import PageHeader from '../../components/ui/PageHeader';
+import QuizCard from '../../components/quiz/QuizCard';
 
 const QuizListPage = () => {
   const [quizzes, setQuizzes] = useState([]);
@@ -18,8 +13,6 @@ const QuizListPage = () => {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [difficultyFilter, setDifficultyFilter] = useState('all');
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     let isMounted = true;
@@ -70,7 +63,7 @@ const QuizListPage = () => {
 
   if (loading) {
     return (
-        <div className="flex items-center justify-center h-64 text-gray-500">
+        <div className="flex items-center justify-center h-64 text-text-secondary">
           Loading...
         </div>
     );
@@ -78,29 +71,28 @@ const QuizListPage = () => {
 
   if (error) {
     return (
-        <div className="p-6">
-          <p role="alert" className="text-red-600 text-center">{error}</p>
+        <div className="max-w-6xl mx-auto p-6">
+          <p role="alert" className="text-danger text-center">{error}</p>
         </div>
     );
   }
 
   return (
-      <div className="p-6 max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Available Quizzes</h1>
+      <div className="max-w-6xl mx-auto p-6">
+        <PageHeader title="Available Quizzes" subtitle="Find a quiz to sharpen your skills." />
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-3 mb-6">
+        <div className="flex flex-wrap gap-3 mb-8">
           <input
               type="text"
               placeholder="Search by title or description..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="flex-1 min-w-[220px] px-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           />
           <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">All Categories</option>
             {categories.map((c) => (
@@ -110,7 +102,7 @@ const QuizListPage = () => {
           <select
               value={difficultyFilter}
               onChange={(e) => setDifficultyFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">All Difficulties</option>
             <option value="EASY">Easy</option>
@@ -120,47 +112,17 @@ const QuizListPage = () => {
         </div>
 
         {quizzes.length === 0 ? (
-            <p className="text-gray-500">No quizzes available.</p>
+            <p className="text-text-secondary text-center py-12">No quizzes available.</p>
         ) : filteredQuizzes.length === 0 ? (
-            <p className="text-gray-500">No quizzes match your filters.</p>
+            <p className="text-text-secondary text-center py-12">No quizzes match your filters.</p>
         ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredQuizzes.map((quiz) => (
-                  <div
+                  <QuizCard
                       key={quiz.id}
-                      onClick={() => navigate(`/quizzes/${quiz.id}/details`)}
-                      className="bg-white rounded-lg shadow-md p-5 border border-gray-100 hover:shadow-lg hover:border-blue-200 transition cursor-pointer group flex flex-col"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-semibold text-lg text-gray-800 group-hover:text-blue-600 transition-colors">
-                        {quiz.title}
-                      </h3>
-                      <span
-                          className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded ${DIFFICULTY_STYLES[quiz.difficulty] || 'bg-gray-100 text-gray-700'}`}
-                      >
-                  {quiz.difficulty}
-                </span>
-                    </div>
-
-                    {categoryNameById.get(quiz.categoryId) && (
-                        <span className="text-xs text-blue-600 font-medium mt-1">
-                  {categoryNameById.get(quiz.categoryId)}
-                </span>
-                    )}
-
-                    <p className="text-gray-600 text-sm mt-2 flex-1">{quiz.description}</p>
-
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-                      <div className="flex items-center gap-3 text-xs text-gray-500">
-                        <span>{quiz.totalQuestions} Questions</span>
-                        <span>·</span>
-                        <span>{quiz.durationMinutes} min</span>
-                      </div>
-                      <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm font-medium group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  View Details
-                </span>
-                    </div>
-                  </div>
+                      quiz={quiz}
+                      categoryName={categoryNameById.get(quiz.categoryId)}
+                  />
               ))}
             </div>
         )}
